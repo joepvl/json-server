@@ -227,6 +227,28 @@ module.exports = function(argv) {
                 server && server.destroy()
                 start()
               }
+            } else {
+              // It's js
+              try {
+                load(source, (err, data) => {
+                  if (readError) {
+                    console.log(chalk.green(`  Read error has been fixed :)`));
+                    readError = false;
+                  }
+
+                  const isDatabaseDifferent = !_.isEqual(data, app.db.getState());
+                  if (isDatabaseDifferent) {
+                    console.log(chalk.gray(`  ${source} has changed, reloading...`));
+                    server && server.destroy();
+                    start();
+                  }
+                });
+              } catch (err) {
+                readError = true;
+                console.log(chalk.red(`  Error reading ${watchedFile}`));
+                console.error(err.message);
+                return;
+              }
             }
           }
         }
